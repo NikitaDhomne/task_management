@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "292365218851",
+    "project_id": "task-synchro",
+    "storage_bucket": "task-synchro.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:292365218851:android:68a1996d91b26bdb00ad96",
+        "android_client_info": {
+          "package_name": "com.example.task_synchro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAba7D2zXbTfj-vzEPIJXm4a5bpEOwI__c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
