@@ -10,7 +10,7 @@ import 'package:task_synchro/screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await NotificationService().initialize(); // Initialize notifications
+  await NotificationService.initialize(); // Initialize notifications
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );

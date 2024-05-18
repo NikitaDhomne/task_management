@@ -1,77 +1,35 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
-import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/data/latest_all.dart' as tz;
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
   // Initialize the plugin (called in your main app)
-  Future<void> initialize() async {
-    const InitializationSettings initializationSettings =
-        InitializationSettings(
-      android: AndroidInitializationSettings(
-          '@mipmap/ic_launcher'), // Replace with your icon resource ID
-    );
-    await _notificationsPlugin.initialize(initializationSettings);
+  static initialize() {
+    _notificationsPlugin.initialize(const InitializationSettings(
+        android: AndroidInitializationSettings('@mipmap/ic_launcher')));
+
+    //  await _notificationsPlugin.initialize(initializationSettings);
     tz.initializeTimeZones();
   }
 
-  // Schedule notification 10 minutes before a given time
-  Future<void> showScheduleNotification(
-      int id, String title, String body, DateTime tenMinutesFromNow) async {
-    await _notificationsPlugin.zonedSchedule(
-      id,
-      title,
-      body,
-      tz.TZDateTime.now(tz.local).add(Duration(
-          seconds: 1)), //schedule the notification to show after 2 seconds.
-      const NotificationDetails(
-        // Android details
-        android: AndroidNotificationDetails('main_channel', 'Main Channel',
-            channelDescription: "nikita",
-            importance: Importance.max,
-            priority: Priority.max),
-      ),
+  static scheduledNotification(
+      String title, String body, DateTime dateTime) async {
+    // Calculate the time 10 minutes before the given dateTime
+    DateTime notificationTime = dateTime.subtract(Duration(minutes: 10));
+    var androidDetails = AndroidNotificationDetails(
+        'important_notification', 'My Channel',
+        importance: Importance.max, priority: Priority.high);
 
-      // Type of time interpretation
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-      androidAllowWhileIdle:
-          true, // To show notification even when the app is closed
-    );
-  }
+    var notificationDetails = NotificationDetails(android: androidDetails);
 
-  Future<void> scheduleNotification(
-    String title,
-    String body,
-    DateTime scheduledDate,
-  ) async {
-    // Convert DateTime to TZDateTime
-    tz.TZDateTime scheduledDateTime = tz.TZDateTime.from(
-      scheduledDate,
-      tz.local,
-    );
-
-    final AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-      'your channel id',
-      'your channel name',
-      importance: Importance.max,
-      priority: Priority.high,
-    );
-    final NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
-    await _notificationsPlugin.zonedSchedule(
-      0,
-      title,
-      body,
-      scheduledDateTime,
-      platformChannelSpecifics,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-    );
+    await _notificationsPlugin.zonedSchedule(1, title, body,
+        tz.TZDateTime.from(notificationTime, tz.local), notificationDetails,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle);
   }
 
   // Show a notification (called from your widgets)

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:task_synchro/providers/notification_service.dart';
 
 import 'package:task_synchro/screens/addtask_screen.dart';
 import 'package:task_synchro/screens/edittask_screen.dart';
@@ -16,7 +17,6 @@ class Homepage extends StatefulWidget {
 }
 
 class _HomepageState extends State<Homepage> {
-  //final NotificationService _notificationService = NotificationService();
   DateTime selectedDate = DateTime.now();
 
   void onDaySelected(int day) {
@@ -47,14 +47,6 @@ class _HomepageState extends State<Homepage> {
         .collection('tasks')
         .doc(taskId)
         .delete();
-  }
-
-  late Future<QuerySnapshot<Map<String, dynamic>>> data;
-
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
   }
 
   @override
@@ -201,176 +193,183 @@ class _HomepageState extends State<Homepage> {
             Expanded(
               flex: 3,
               child: Center(
-                child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-                  stream: FirebaseFirestore.instance
-                      .collection('Users')
-                      .doc(userId)
-                      .collection('tasks')
-                      .snapshots(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return CircularProgressIndicator();
-                    }
+                  child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream: FirebaseFirestore.instance
+                    .collection('Users')
+                    .doc(userId)
+                    .collection('tasks')
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return CircularProgressIndicator();
+                  }
 
-                    if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    }
+                  if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  }
 
-                    // Filter tasks based on selected date
-                    final List<DocumentSnapshot> tasks = snapshot.data!.docs
-                        .where((doc) =>
-                            doc['startDate'].toDate().isBefore(selectedDate) &&
-                            doc['endDate'].toDate().isAfter(selectedDate))
-                        .toList();
+                  // Filter tasks based on selected date
+                  final List<DocumentSnapshot> tasks =
+                      snapshot.data!.docs.where((doc) {
+                    DateTime startDate = doc['startDate'].toDate();
+                    DateTime endDate = doc['endDate'].toDate();
 
-                    return ListView.builder(
-                      itemCount: tasks.length,
-                      itemBuilder: (context, index) {
-                        final document = tasks[index];
-                        final taskId = document.id;
-                        final title = document['title'];
-                        final description = document['description'];
-                        final startDate =
-                            (document['startDate'] as Timestamp).toDate();
-                        final startTime = document['startTime'];
-                        final endDate =
-                            (document['endDate'] as Timestamp).toDate();
-                        final endTime = document['endTime'];
-                        final duration = document['duration'];
-                        final status = document['status'];
+                    // Only compare the date components
+                    DateTime startDateOnly = DateTime(
+                        startDate.year, startDate.month, startDate.day);
+                    DateTime endDateOnly =
+                        DateTime(endDate.year, endDate.month, endDate.day);
+                    DateTime selectedDateOnly = DateTime(selectedDate.year,
+                        selectedDate.month, selectedDate.day);
 
-                        // Format dates and times
-                        String formattedStartDate =
-                            DateFormat('d MMMM').format(startDate);
-                        String formattedStartTime = startTime is Timestamp
-                            ? DateFormat('h:mm a').format(startTime.toDate())
-                            : startTime
-                                .toString(); // Convert to string if needed
-                        String formattedEndDate =
-                            DateFormat('d MMMM').format(endDate);
-                        String formattedEndTime = endTime is Timestamp
-                            ? DateFormat('h:mm a').format(endTime.toDate())
-                            : endTime.toString(); // Convert to string if needed
+                    return startDateOnly.isBefore(
+                            selectedDateOnly.add(Duration(days: 1))) &&
+                        endDateOnly.isAfter(
+                            selectedDateOnly.subtract(Duration(days: 1)));
+                  }).toList();
 
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => EditTaskScreen(
-                                        userId: userId, taskId: taskId)));
-                          },
-                          child: Card(
-                              color: cardColors[index %
-                                  cardColors
-                                      .length], // Assign color based on index
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 8),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          '$title',
-                                          style: TextStyle(
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.w500),
-                                        ),
-                                        Text(
-                                          '$description',
-                                          style: TextStyle(
-                                              color: Colors.black54,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        Text(
-                                          'Start Time : $formattedStartDate $formattedStartTime',
-                                          style: TextStyle(
-                                              color: Colors.black54,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        Text(
-                                          'Deadline : $formattedEndDate $formattedEndTime',
-                                          style: TextStyle(
-                                              color: Colors.black54,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        Text(
-                                          'Duration : $duration',
-                                          style: TextStyle(
-                                              color: Colors.black54,
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Column(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                          padding: EdgeInsets.only(right: 10),
-                                          child: IconButton(
-                                            icon: status == 'pending'
-                                                ? Icon(
-                                                    Icons
-                                                        .pending_actions_rounded,
-                                                    color: Colors.pinkAccent,
-                                                    size: 30,
-                                                  )
-                                                : Icon(
-                                                    Icons
-                                                        .check_circle_outline_outlined,
-                                                    color: Colors.amber,
-                                                    size: 30,
-                                                  ),
-                                            onPressed: () {
-                                              if (status == 'pending') {
-                                                updateTaskStatus(userId, taskId,
-                                                    'completed');
-                                              } else {
-                                                updateTaskStatus(
-                                                    userId, taskId, 'pending');
-                                              }
-                                            },
-                                          )),
-                                      SizedBox(
-                                        height: 20,
-                                      ),
-                                      Container(
-                                          padding: EdgeInsets.only(
-                                            right: 10,
-                                          ),
-                                          child: IconButton(
-                                              onPressed: () async {
-                                                await deleteTask(
-                                                    userId, taskId);
-                                              },
-                                              icon: Icon(Icons.delete,
-                                                  color: Colors.red, size: 30)))
-                                    ],
-                                  )
-                                ],
-                              )),
-                        );
-                      },
+                  if (tasks.isEmpty) {
+                    return Text(
+                      'No tasks for the selected date',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     );
-                  },
-                ),
-              ),
+                  }
+
+                  return ListView.builder(
+                    itemCount: tasks.length,
+                    itemBuilder: (context, index) {
+                      final document = tasks[index];
+                      final taskId = document.id;
+                      final title = document['title'];
+                      final description = document['description'];
+                      final startDate =
+                          (document['startDate'] as Timestamp).toDate();
+                      final startTime = document['startTime'];
+                      final endDate =
+                          (document['endDate'] as Timestamp).toDate();
+                      final endTime = document['endTime'];
+                      final duration = document['duration'];
+                      final status = document['status'];
+
+                      // Format dates and times
+                      String formattedStartDate =
+                          DateFormat('d MMMM').format(startDate);
+                      String formattedStartTime = startTime is Timestamp
+                          ? DateFormat('h:mm a').format(startTime.toDate())
+                          : startTime.toString(); // Convert to string if needed
+                      String formattedEndDate =
+                          DateFormat('d MMMM').format(endDate);
+                      String formattedEndTime = endTime is Timestamp
+                          ? DateFormat('h:mm a').format(endTime.toDate())
+                          : endTime.toString(); // Convert to string if needed
+
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => EditTaskScreen(
+                                      userId: userId, taskId: taskId)));
+                        },
+                        child: Card(
+                            color: cardColors[index %
+                                cardColors
+                                    .length], // Assign color based on index
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 8),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '$title',
+                                        style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w500),
+                                      ),
+                                      Text(
+                                        '$description',
+                                        style: TextStyle(
+                                            color: Colors.black54,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Text(
+                                        'Start Time : $formattedStartDate $formattedStartTime',
+                                        style: TextStyle(
+                                            color: Colors.black54,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      Text(
+                                        'Deadline : $formattedEndDate $formattedEndTime',
+                                        style: TextStyle(
+                                            color: Colors.black54,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Column(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                        padding: EdgeInsets.only(right: 10),
+                                        child: IconButton(
+                                          icon: status == 'pending'
+                                              ? Icon(
+                                                  Icons.pending_actions_rounded,
+                                                  color: Colors.pinkAccent,
+                                                  size: 30,
+                                                )
+                                              : Icon(
+                                                  Icons
+                                                      .check_circle_outline_outlined,
+                                                  color: Colors.amber,
+                                                  size: 30,
+                                                ),
+                                          onPressed: () {
+                                            if (status == 'pending') {
+                                              updateTaskStatus(
+                                                  userId, taskId, 'completed');
+                                            } else {
+                                              updateTaskStatus(
+                                                  userId, taskId, 'pending');
+                                            }
+                                          },
+                                        )),
+                                    SizedBox(
+                                      height: 20,
+                                    ),
+                                    Container(
+                                        padding: EdgeInsets.only(
+                                          right: 10,
+                                        ),
+                                        child: IconButton(
+                                            onPressed: () async {
+                                              await deleteTask(userId, taskId);
+                                            },
+                                            icon: Icon(Icons.delete,
+                                                color: Colors.red, size: 30)))
+                                  ],
+                                )
+                              ],
+                            )),
+                      );
+                    },
+                  );
+                },
+              )),
             ),
           ],
         ),

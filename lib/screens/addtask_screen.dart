@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 import 'package:intl/intl.dart';
+import 'package:task_synchro/providers/notification_service.dart';
 
 class AddTaskScreen extends StatefulWidget {
   final String userId;
@@ -150,6 +151,10 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             'duration': formattedDuration,
             'status': 'pending'
           });
+          DateTime dateTime = DateTime(endDateTime.year, endDateTime.month,
+              endDateTime.day, _endTime.hour, _endTime.minute);
+          NotificationService.scheduledNotification(
+              titleController.text, descController.text, dateTime);
 
           Navigator.of(context).pop();
         } catch (e) {
