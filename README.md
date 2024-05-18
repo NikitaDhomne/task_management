@@ -1,16 +1,7 @@
-# task_synchro
+# Task Synchro
 
-A new Flutter project.
+Simple task management app with notification and firebase for authentication and CRUD operation on data.
+## Here attached pdf file which has details of app and steps for how to use app
 
-## Getting Started
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+[Task_Synchro.pdf](https://github.com/NikitaDhomne/task_management/files/15360748/Task_Synchro.pdf)
